@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "common.h"
+#include "compiler.h"
 #include "debug.h"
 #include "vm.h"
 
@@ -42,7 +43,7 @@ static InterpretResult run() {
         printf("      ");
         for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
             printf("[");
-            printValue(slot);
+            printValue(*slot);
             printf("]");
         }
         printf("\n");
@@ -92,8 +93,7 @@ static InterpretResult run() {
 }
 
 
-InterpretResult interpret(Chunk* chunk) {
-    vm.chunk = chunk;
-    vm.ip = vm.chunk->code;
-    return run();
+InterpretResult interpret(const char* source) {
+    compile(source);
+    return INTERPRET_OK;
 }
