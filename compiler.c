@@ -33,12 +33,9 @@ typedef void (*ParseFn)();
 typedef struct{
     ParseFn prefix;
     ParseFn infix;
-    Precedence precedence
+    Precedence precedence;
 }ParseRule;
 
-static ParseRule* getRule(TokenType type){
-    return &rule[type];
-}
 Parser parser;
 
 Chunk* compilingChunk;
@@ -65,7 +62,7 @@ static void error(const char* message){
     errorAt(&parser.previous, message);
 }
 static void errorAtCurrent(const char* message) {
- errorAt(&parser.current, message);
+    errorAt(&parser.current, message);
 }
 
 static void advance(){
@@ -120,7 +117,7 @@ static void expression();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static void binary{
+static void binary(){
     TokenType operatorType = parser.previous.type;
 
     ParseRule* rule = getRule(operatorType);
@@ -143,7 +140,7 @@ static void binary{
 }
 
 static void literal(){
-    switch(parse.previous.type){
+    switch(parser.previous.type){
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_NIL: emitByte(OP_NIL); break;
         case TOKEN_TRUE: emitByte(OP_TRUE); break; 
@@ -162,6 +159,10 @@ static void emitConstant(Value value){
 static void number(){
     double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
+}
+
+static void string(){
+    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1), (parser.previous.length - 2)));
 }
 
 static void unary() {
@@ -196,7 +197,7 @@ ParseRule rules[] = {
     [TOKEN_LESS] =          {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL] =    {NULL, binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER] =    {NULL, NULL, PREC_NONE},
-    [TOKEN_STRING] =        {NULL, NULL, PREC_NONE},
+    [TOKEN_STRING] =        {string, NULL, PREC_NONE},
     [TOKEN_NUMBER] =        {number, NULL, PREC_NONE},
     [TOKEN_AND] =           {NULL, NULL, PREC_NONE},
     [TOKEN_CLASS] =         {NULL, NULL, PREC_NONE},
@@ -217,6 +218,10 @@ ParseRule rules[] = {
     [TOKEN_ERROR] =         {NULL, NULL, PREC_NONE},
     [TOKEN_EOF] =           {NULL, NULL, PREC_NONE},
 };
+
+static ParseRule* getRule(TokenType type){
+    return &rules[type];
+}
 
 static void parsePrecedence(Precedence precedence){
     advance();
@@ -246,5 +251,5 @@ void compile(const char* source, Chunk* chunk){
     expression();
     consume(TOKEN_EOF, "Expect end of expression");
     endCompiler();
-    return !parser.hadError;
+    //return !parser.hadError;
 }
