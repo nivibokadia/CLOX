@@ -5,6 +5,8 @@
 #include "compiler.h"
 #include "debug.h"
 #include "vm.h"
+#include "memory.h"
+#include "object.h"
 
 VM vm;
 
