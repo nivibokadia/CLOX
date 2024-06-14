@@ -31,5 +31,6 @@ typedef struct{
 
 void initScanner(const char* source);
 Token scanToken();
+//bool checkKeyword(int start, int length, const char* rest, TokenType type);
 
 #endif

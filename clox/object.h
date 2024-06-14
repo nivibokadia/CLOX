@@ -22,6 +22,7 @@ struct ObjString {      //values in heap that are string (need to store it seper
     Obj obj;            //they need an array to be represented)
     int length;
     char* chars;
+    uint32_t hash;
 }; 
 
 ObjString* takeString(char* chars, int length);

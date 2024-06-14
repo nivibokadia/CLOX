@@ -3,13 +3,14 @@
 #include "chunk.h"
 #include "value.h"
 #define STACK_MAX 256
+#include "table.h"
 
 typedef struct {
     Chunk* chunk;               // The current chunk of bytecode being executed.
     uint8_t* ip;                // The instruction pointer.
     Value stack[STACK_MAX];     // The operand stack.
     Value* stackTop;  
-    
+    Table strings;
     Obj* objects;          // Pointer to the top of the stack.
 } VM;
 

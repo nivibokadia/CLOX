@@ -18,19 +18,15 @@ void freeChunk(Chunk* chunk){
     initChunk(chunk);
 }
 
-void writeChunk(Chunk* chunk, uint8_t byte, int line){
-    if(chunk->capacity < chunk->count + 1){
+void writeChunk(Chunk* chunk, uint8_t byte, int line) {
+    if (chunk->capacity < chunk->count + 1) {
         int oldCapacity = chunk->capacity;
         chunk->capacity = GROW_CAPACITY(oldCapacity);
-        chunk->code = GROW_ARRAY(int, chunk->code, oldCapacity, chunk->capacity);
-        chunk->lines = GROW_ARRAY(int, chunk->lines, oldCapacity, chunk->capacity);
-
+        chunk->code = GROW_ARRAY(uint8_t, chunk->code,
+        oldCapacity, chunk->capacity);
     }
-    else{
-        chunk->code[chunk->count] = byte;
-        chunk->lines[chunk->count] = line;
-        chunk->count++;
-    }
+    chunk->code[chunk->count] = byte;
+    chunk->count++;
 }
 
 int addConstant(Chunk* chunk, Value value){
