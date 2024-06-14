@@ -177,6 +177,15 @@ static void string(){
     emitConstant(OBJ_VAL(copyString((parser.previous.start + 1), (parser.previous.length - 2))));
 }
 
+static void namedVariable(Token name) {
+    uint8_t arg = identifierConstant(&name);
+    emitBytes(OP_GET_GLOBAL, arg);
+}
+
+static void variable(){
+    namedVariable(parser.previous);
+}
+
 static void unary() {
     parsePrecedence(PREC_UNARY);
     TokenType operatorType = parser.previous.type;
@@ -208,7 +217,7 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS] =          {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL] =    {NULL, binary, PREC_COMPARISON},
-    [TOKEN_IDENTIFIER] =    {NULL, NULL, PREC_NONE},
+    [TOKEN_IDENTIFIER] =    {variable, NULL, PREC_NONE},
     [TOKEN_STRING] =        {string, NULL, PREC_NONE},
     [TOKEN_NUMBER] =        {number, NULL, PREC_NONE},
     [TOKEN_AND] =           {NULL, NULL, PREC_NONE},
@@ -248,6 +257,19 @@ static void parsePrecedence(Precedence precedence){
         ParseFn infixRule = getRule(parser.previous.type)->infix;
         infixRule();
     }
+}
+
+static uint8_t identifierConstant(Token* name){
+    return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+static uint8_t parseVariable(const char* errorMessage){
+    consume(TOKEN_IDENTIFIER, errorMessage);
+    return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint8_t global) {
+    emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
 static void expression(){
@@ -293,6 +315,18 @@ static void statement(){
     else{
         expressionStatment();
     }
+}
+
+static void varDeclaration(){
+    uint8_t global = parseVariable("Expect a variable name.");
+    if(match(TOKEN_EQUAL)){
+        expression();
+    }
+    else{
+        emitByte(OP_NIL);
+    }
+    consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
+    defineVariable(global);
 }
 
 static void declaration(){

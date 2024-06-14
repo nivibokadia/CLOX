@@ -9,7 +9,8 @@ typedef struct {
     Chunk* chunk;               // The current chunk of bytecode being executed.
     uint8_t* ip;                // The instruction pointer.
     Value stack[STACK_MAX];     // The operand stack.
-    Value* stackTop;  
+    Value* stackTop;
+    Table globals;  
     Table strings;
     Obj* objects;          // Pointer to the top of the stack.
 } VM;
