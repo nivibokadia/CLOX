@@ -20,7 +20,9 @@ typedef enum{       //defining opcodes
     OP_GREATER,
     OP_LESS,
     OP_NEGATE,
-    OP_PRINT,
+    OP_PRINT,\
+    OP_JUMP,
+    OP_JUMP_IF_FALSE,
     OP_ADD,
     OP_SUBTRACT,
     OP_MULTIPLY,
