@@ -114,6 +114,11 @@ static InterpretResult run() {
             case OP_FALSE:
                 push(BOOL_VAL(false));
                 break;
+            case OP_LOOP: {
+                uint16_t offset = READ_SHORT();
+                vm.ip -= offset;
+                break;
+            }
             case OP_JUMP: {
             uint16_t offset = READ_SHORT();
             vm.ip += offset;
