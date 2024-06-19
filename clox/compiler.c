@@ -608,9 +608,9 @@ static void declaration(){
 }
 
 ObjFunction* compile(const char* source){
-    initScanner(source, TYPE_SCRIPT);
+    initScanner(source);
     Compiler compiler;
-    initCompiler(&compiler);
+    initCompiler(&compiler, TYPE_SCRIPT);
     compilingChunk = chunk;
     parser.hadError = false;
     parser.panicMode = false;
@@ -618,6 +618,6 @@ ObjFunction* compile(const char* source){
     while(!match(TOKEN_EOF)){
         declaration();
     }
-    endCompiler();
-    return !parser.hadError;
+    ObjFunction* function = endCompiler();
+ return parser.hadError ? NULL : function;
 }
