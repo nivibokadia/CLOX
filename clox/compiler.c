@@ -37,17 +37,17 @@ typedef struct{
     Precedence precedence;
 }ParseRule;
 
-typdef struct{
+typedef struct{
     Token name;
     int length;
 }Local;
 
-typdef enum{
+typedef enum{
     TYPE_FUNCTION,
     TYPE_SCRIPT
 } FunctionType;
 
-typdef struct{
+typedef struct{
     ObjFunction* function;
     FunctionType type;
     Local locals[UINT8_COUNT];
@@ -60,7 +60,7 @@ Compiler* current = NULL;
 Chunk* compilingChunk;
 
 static Chunk* currentChunk(){
-    return current->function->chunk;
+    return &current->function->chunk;
 }
 
 static void errorAt(Token* token, const char* message) {
@@ -102,10 +102,10 @@ static void consume(TokenType type, const char* message){
 }
 
 static bool check(TokenType type){
-    return(parser.current.type == type)
+    return(parser.current.type == type);
 }
 
-static bool match(TokenType token){
+static bool match(TokenType type){
     if(!check(type)) return false;
     advance();
     true;
@@ -124,11 +124,11 @@ static void emitLoop(int loopStart){
     emitByte(OP_POP);
     int offset = currentChunk()->count - loopStart + 2;
     if(offset > UINT16_MAX) error("Loop body too large.");
-    emitByte(offset>>8) & 0xff;
+    emitByte((offset >> 8) & 0xff);
     emitByte(offset & 0xff);
 }
 
-static void emitJump(uint8_t instruction){
+static int emitJump(uint8_t instruction){
     emitByte(instruction);
     emitByte(0xff);
     emitByte(0xff);
@@ -149,7 +149,7 @@ static uint8_t makeConstant(Value value) {
 
 static ObjFunction* endCompiler(){
     emitReturn();
-    ObjFunction function = current->function;
+    ObjFunction* function = current->function;
     #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
         disassembleChunk(currentChunk(), function->name != NULL ? function->name->chars : "<script>");
@@ -166,8 +166,8 @@ static void endScope(){
     while (current->localCount > 0 && current->locals[current->localCount - 1].depth >current->scopeDepth) {
         emitByte(OP_POP);
         current->localCount--;
+        current->scopeDepth--;
     }
-    current->scopeDepth--;
 }
 
 static void expression();
@@ -414,8 +414,7 @@ static uint8_t parseVariable(const char* errorMessage){
 }
 
 static void markInitialized() {
-    current->locals[current->localCount - 1].depth =
-    current->scopeDepth;
+    current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
 static void defineVariable(uint8_t global) {
@@ -549,7 +548,7 @@ static void forStatement(){
 static void ifStatement(){
     consume(TOKEN_LEFT_PAREN, "Expect '(' after if.");
     expression();
-    consumre(TOKEN_RIGHT_PAREN. "Expect ')' after condition.");
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int thenJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);

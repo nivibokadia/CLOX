@@ -3,12 +3,12 @@
 #include "common.h"
 #include "value.h"
 
-typdef struct{
+typedef struct{
     ObjString* key;
     Value value;
 } Entry;
 
-typedef struct{
+typedef struct {
     int count;
     int capacity;
     Entry* entries;
