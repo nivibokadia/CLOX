@@ -6,7 +6,9 @@
 #include "table.h"
 #include "value.h"
 #define ALLOCATE_OBJ(type, objectType) (type*)allocateObject(sizeof(type), objectType)
+
 VM vm;
+
 static Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
@@ -15,9 +17,16 @@ static Obj* allocateObject(size_t size, ObjType type) {
     return object;
 }
 
+ObjClosure* newClosure(ObjFunction* function){
+    ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+    closure->function = function;
+    return closure;
+}
+
 ObjFunction* newFunction(){
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
-    function->arity = 0;
+    function->arity = 0; 
+    function->upvalueCount = 0;
     function->name = NULL;
     initChunk(&function->chunk);
     return function;
@@ -79,6 +88,12 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
+    case OBJ_CLOSURE:
+    printFunction(AS_CLOSURE(value)->function);
+    break;
+    case OBJ_FUNCTION:
+    printFunction(AS_FUNCTION(value));
+    break;
     case OBJ_NATIVE:
     printf("<native fn>");
     break;
