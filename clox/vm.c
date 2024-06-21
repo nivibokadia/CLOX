@@ -17,6 +17,8 @@ static Value clockNative(int argCount, Value* args) {
 
 static void resetStack(){
     vm.stackTop = vm.stack;
+    vm.frameCount = 0;
+    vm.openUpvalues = NULL;
 }
 
 static void runtimeError(const char* format, ...) {
@@ -113,6 +115,35 @@ static bool callValue(Value callee, int argCount) {
     return false;
 }
 
+static ObjUpvalue* captureUpvalue(Value* local) {
+    ObjUpvalue* preUpvalue = NULL;
+    ObjUpvalue* Upvalue = vm.openUpvalues;
+    while(upvalue != NULL && upvalue->location > local){
+        preUpvalue = upvalue;
+        upvalue = upvalue->next; 
+    }
+    if(upvalue != NULL && upvalue->location == local){
+        return upvalue;
+    }
+    createdUpvalue->next = upvalue;
+    if(preUpvalue == NULL){
+        vm.openUpvalues = createdUpvalue;
+    } else {
+        preUpvalue->next = createdUpvalue;
+    }
+    ObjUpvalue* createdUpvalue = newUpvalue(local);
+    return createdUpvalue;
+}
+
+static void closeUpvalues(Value* last){
+    while(vm.openUpvalues != NULL && vm.openUpvalues->location >= last){
+        ObjUpvalue* upvalue = vm.openUpvalues;
+        upvalue->closed = *upvalue->location;
+        upvalue->location = &upvalue->closed;
+        vm.openUpvalues = upvalue->next;
+    }
+}
+
 static bool isFalsey(Value value){
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -135,14 +166,14 @@ static InterpretResult run() {
     #define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
     #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
     #define READ_STRING() AS_STRING(READ_CONSTANT())
-    #define BINARY_OP(valueType, op) \
+    #define BINARY_OP(valueType, op)
     do { \
-        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
-        runtimeError("Operands must be numbers."); \
-        return INTERPRET_RUNTIME_ERROR; } \
-        double b = AS_NUMBER(pop()); \
-        double a = AS_NUMBER(pop()); \
-        push(valueType(a op b)); \
+        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { 
+            runtimeError("Operands must be numbers."); 
+            return INTERPRET_RUNTIME_ERROR; } 
+            double b = AS_NUMBER(pop()); 
+            double a = AS_NUMBER(pop()); 
+            push(valueType(a op b)); 
         } while (false)
 
     for (;;) {
@@ -229,6 +260,16 @@ static InterpretResult run() {
                 pop();
                 break;
             }
+            case OP_GET_UPVALUE: {
+                uint8_t slot = READ_BYTE();
+                push(*frame->closure->upvalues[slot]->location);
+                break;
+            }
+            case OP_SET_UPVALUE: {
+                uint8_t slot = READ_BYTE();
+                *frame->closure->upvalues[slot]->location = peek(0);
+                break;
+            }
             case OP_EQUAL:{
                 Value b = pop();
                 Value a = pop();
@@ -302,10 +343,26 @@ static InterpretResult run() {
                 ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
                 ObjClosure* closure = newClosure(function);
                 push(OBJ_VAL(closure));
+                for (int i = 0; i < closure->upvalueCount; i++) {
+                    uint8_t isLocal = READ_BYTE();
+                    uint8_t index = READ_BYTE();
+                    if (isLocal) {
+                        closure->upvalues[i] =
+                        captureUpvalue(frame->slots + index);
+                    } else {
+                        closure->upvalues[i] = frame->closure->upvalues[index];
+                    }
+                }
+                break;
+            }
+            case OP_CLOSE_UPVALUE: {
+                closeUpvalues(vm.stackTop - 1);
+                pop();
                 break;
             }
             case OP_RETURN: {
                 Value result = pop();
+                closeUpvalues(frame->slots);
                 vm.frameCount--;
                 if (vm.frameCount == 0) {
                     pop();

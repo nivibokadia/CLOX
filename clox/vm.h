@@ -19,6 +19,7 @@ typedef struct {
     Value* stackTop;
     Table globals;  
     Table strings;
+    ObjUpvalue* openUpvalues;
     Obj* objects;          // Pointer to the top of the stack.
 } VM;
 
