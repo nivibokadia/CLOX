@@ -20,7 +20,12 @@ typedef struct {
     Table globals;  
     Table strings;
     ObjUpvalue* openUpvalues;
+    size_t bytesAllocated;
+    size_t nextGC;
     Obj* objects;          // Pointer to the top of the stack.
+    int grayCapacity;
+    int grayCount;
+    Obj** grayStack;
 } VM;
 
 typedef enum {                  //shows the state of VM

@@ -20,4 +20,6 @@ bool tableGet(Table* table, ObjString* key, Value value);
 bool tableSet(Table* table, ObjString* key, Value value);
 void tableAddAll(Table* from, Table* to);
 ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t hash);
+void tableRemoveWhite(Table* table);
+void MarkTable(Table* table);
 #endif
