@@ -13,7 +13,7 @@ typedef struct {
 } CallFrame;
 
 typedef struct {
-    CallFrame frames[FRAMES_MAX];  //has its own pointer and ip
+    CallFrame frames[FRAMES_MAX];  //has its own pointer and ip (array of callframes)
     int frameCount;                
     Value stack[STACK_MAX];     // The operand stack.
     Value* stackTop;
